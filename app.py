@@ -105,7 +105,7 @@ def student_submission():
 
 
 # Delete single response
-@app.route('/super-secret-prof-portal-2024/delete/<int:response_id>')
+@app.route('/HKU_MSMKprof_portal_admin/delete/<int:response_id>')
 def delete_response(response_id):
     conn = sqlite3.connect('classroom.db')
     c = conn.cursor()
@@ -115,7 +115,7 @@ def delete_response(response_id):
     return redirect(url_for('admin'))  # Refresh admin page
 
 # Delete all responses for current class
-@app.route('/super-secret-prof-portal-2024/clear-all')
+@app.route('/sHKU_MSMKprof_portal_admin/clear-all')
 def clear_all_responses():
     if 'class_id' not in session:
         return "No class selected", 400
@@ -138,31 +138,47 @@ def clear_all_responses():
 # Admin interface
 @app.route('/HKU_MSMKprof_portal_admin')
 def admin():
-    focus_class = request.args.get('focus_class')
-    
-    conn = sqlite3.connect('classroom.db')
-    c = conn.cursor()
-    
-    # Get all classes
-    c.execute("SELECT id, name, access_code FROM classes")
-    classes = c.fetchall()
-    
-    # Get responses (filter if focus_class specified)
-    query = '''
-        SELECT r.id, c.name, q.text, r.uid, r.student_name, r.answer, r.timestamp
-        FROM responses r
-        JOIN questions q ON r.question_id = q.id
-        JOIN classes c ON q.class_id = c.id
-        {% if focus_class %}
-        WHERE c.id = ?
-        {% endif %}
-        ORDER BY r.timestamp DESC
-    '''
-    c.execute(query, (focus_class,) if focus_class else query.replace('WHERE c.id = ?', ''), ())
-    responses = c.fetchall()
-    
-    conn.close()
-    return render_template('admin.html', classes=classes, responses=responses, focus_class=focus_class)
+    try:
+        focus_class = request.args.get('focus_class')
+        
+        conn = sqlite3.connect('classroom.db', timeout=10)  # Add timeout
+        c = conn.cursor()
+        
+        # Debug: Print tables to verify database structure
+        c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        print("Tables in database:", c.fetchall())  # Check Render logs for this
+        
+        # Get all classes
+        c.execute("SELECT id, name, access_code FROM classes")
+        classes = c.fetchall()
+        
+        # Build response query
+        query = '''
+            SELECT r.id, c.name, q.text, r.uid, r.student_name, r.answer, r.timestamp
+            FROM responses r
+            JOIN questions q ON r.question_id = q.id
+            JOIN classes c ON q.class_id = c.id
+        '''
+        params = ()
+        
+        if focus_class:
+            query += ' WHERE c.id = ?'
+            params = (focus_class,)
+            
+        query += ' ORDER BY r.timestamp DESC'
+        
+        c.execute(query, params)
+        responses = c.fetchall()
+        conn.close()
+        
+        return render_template('admin.html', 
+                            classes=classes, 
+                            responses=responses,
+                            focus_class=focus_class)
+                            
+    except Exception as e:
+        print(f"Admin route error: {str(e)}")  # Check Render logs
+        return f"Error loading admin page: {str(e)}", 500
 
 # Add a new class (admin only)
 @app.route('/HKU_MSMKprof_portal_admin/add_class', methods=['POST'])
