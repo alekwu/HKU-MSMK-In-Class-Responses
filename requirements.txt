@@ -1,3 +1,4 @@
-Flask==2.3.2
+flask==2.3.2
 gunicorn==20.1.0
-Werkzeug==2.3.7
+flask-login==0.6.3
+werkzeug==2.3.7
