@@ -69,32 +69,34 @@
                         </small>
                     </div>
                     <div class="d-flex">
-   			<div class="dropdown me-2">
-    				<button class="btn btn-light dropdown-toggle" type="button" id="classFilterDropdown" 
-           				 data-bs-toggle="dropdown" aria-expanded="false">
-        				<i class="bi bi-funnel"></i> Filter
-    			</button>
-    			<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="classFilterDropdown">
-      				<li><h6 class="dropdown-header">Select Class</h6></li>
-       				 <li><a class="dropdown-item" href="{{ url_for('admin') }}">
-        			    <i class="bi bi-collection"></i> All Classes
-        		</a></li>
-       			 <li><hr class="dropdown-divider"></li>
-        		{% for class in classes %}
-     			   <li>
-           			 <a class="dropdown-item" 
-          			     href="{{ url_for('admin', focus_class=class[0]) }}">
-         			       {{ class[1] }}
-          			  </a>
-        	           </li>
-        			{% endfor %}
-    		</ul>
-		</div>
-                        <a href="{{ url_for('clear_all_responses') }}" 
+                        <div class="dropdown me-2">
+                            <button class="btn btn-light dropdown-toggle" type="button" id="classFilterDropdown" 
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-funnel"></i> Filter
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="classFilterDropdown">
+                                <li><h6 class="dropdown-header">Select Class</h6></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin') }}">
+                                    <i class="bi bi-collection"></i> All Classes
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% for class in classes %}
+                                <li>
+                                    <a class="dropdown-item {% if focus_class|int == class[0] %}active{% endif %}" 
+                                       href="{{ url_for('admin', focus_class=class[0]) }}">
+                                        {{ class[1] }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% if focus_class %}
+                        <a href="{{ url_for('clear_all_responses', class_id=focus_class) }}" 
                            class="btn btn-warning"
-                           onclick="return confirm('WARNING: Delete ALL responses for the currently filtered class?')">
+                           onclick="return confirm('WARNING: This will permanently delete ALL responses for this class. Continue?')">
                             <i class="bi bi-trash"></i> Clear
                         </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -148,26 +150,13 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Highlight the current filter in dropdown
-    const urlParams = new URLSearchParams(window.location.search);
-    const focusClass = urlParams.get('focus_class');
-    
-    if (focusClass) {
-        const dropdownItems = document.querySelectorAll('.dropdown-item');
-        dropdownItems.forEach(item => {
-            if (item.getAttribute('href').includes('focus_class=' + focusClass)) {
-                item.classList.add('active');
-                item.innerHTML = '<i class="bi bi-check-circle"></i> ' + item.innerHTML;
-            }
-        });
-    } else {
-        // Highlight "All Classes" if no filter
-        const allClassesItem = document.querySelector('.dropdown-item[href*="admin"]');
-        if (allClassesItem) {
-            allClassesItem.classList.add('active');
-            allClassesItem.innerHTML = '<i class="bi bi-check-circle"></i> ' + allClassesItem.innerHTML;
+    // Highlight current filter in dropdown
+    const dropdownItems = document.querySelectorAll('.dropdown-item');
+    dropdownItems.forEach(item => {
+        if (item.classList.contains('active')) {
+            item.innerHTML = '<i class="bi bi-check-circle"></i> ' + item.innerHTML;
         }
-    }
+    });
 });
 </script>
 {% endblock %}
