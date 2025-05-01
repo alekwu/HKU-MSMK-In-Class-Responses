@@ -138,6 +138,8 @@ def clear_all_responses():
 # Admin interface
 @app.route('/HKU_MSMKprof_portal_admin')
 def admin():
+    focus_class = request.args.get('focus_class')
+    
     conn = sqlite3.connect('classroom.db')
     c = conn.cursor()
     
@@ -145,17 +147,22 @@ def admin():
     c.execute("SELECT id, name, access_code FROM classes")
     classes = c.fetchall()
     
-    # Get all responses
-    c.execute('''SELECT r.id, c.name, q.text, r.uid, r.student_name, r.answer, r.timestamp
-                 FROM responses r
-                 JOIN questions q ON r.question_id = q.id
-                 JOIN classes c ON q.class_id = c.id
-                 ORDER BY r.timestamp DESC''')
+    # Get responses (filter if focus_class specified)
+    query = '''
+        SELECT r.id, c.name, q.text, r.uid, r.student_name, r.answer, r.timestamp
+        FROM responses r
+        JOIN questions q ON r.question_id = q.id
+        JOIN classes c ON q.class_id = c.id
+        {% if focus_class %}
+        WHERE c.id = ?
+        {% endif %}
+        ORDER BY r.timestamp DESC
+    '''
+    c.execute(query, (focus_class,) if focus_class else query.replace('WHERE c.id = ?', ''), ())
     responses = c.fetchall()
     
     conn.close()
-    
-    return render_template('admin.html', classes=classes, responses=responses)
+    return render_template('admin.html', classes=classes, responses=responses, focus_class=focus_class)
 
 # Add a new class (admin only)
 @app.route('/HKU_MSMKprof_portal_admin/add_class', methods=['POST'])

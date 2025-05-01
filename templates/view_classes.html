@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Manage Classes</h2>
+    <a href="{{ url_for('admin') }}" class="btn btn-secondary mb-3">
+        ← Back to Dashboard
+    </a>
+    
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-primary">
+                <tr>
+                    <th>Class Name</th>
+                    <th>Access Code</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for class in classes %}
+                <tr>
+                    <td>{{ class[1] }}</td>
+                    <td><code>{{ class[2] }}</code></td>
+                    <td>
+                        <a href="{{ url_for('admin') }}?focus_class={{ class[0] }}" 
+                           class="btn btn-sm btn-outline-primary">
+                            View Responses
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
