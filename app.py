@@ -103,6 +103,7 @@ def student_submission():
     
     return render_template('student.html', class_name=session['class_name'])
 
+
 # Delete single response
 @app.route('/super-secret-prof-portal-2024/delete/<int:response_id>')
 def delete_response(response_id):
@@ -131,6 +132,7 @@ def clear_all_responses():
     conn.commit()
     conn.close()
     return redirect(url_for('admin'))
+
 
 
 # Admin interface
@@ -173,6 +175,41 @@ def add_class():
     
     conn.close()
     return redirect(url_for('admin'))
+
+# View all classes
+@app.route('/super-secret-prof-portal-2024/classes')
+def view_classes():
+    conn = sqlite3.connect('classroom.db')
+    c = conn.cursor()
+    c.execute("SELECT id, name, access_code FROM classes")
+    classes = c.fetchall()
+    conn.close()
+    return render_template('classes.html', classes=classes)
+
+# Delete a class
+@app.route('/super-secret-prof-portal-2024/delete-class/<int:class_id>')
+def delete_class(class_id):
+    conn = sqlite3.connect('classroom.db')
+    c = conn.cursor()
+    
+    # First delete responses linked to this class
+    c.execute("""
+        DELETE FROM responses 
+        WHERE question_id IN (
+            SELECT id FROM questions 
+            WHERE class_id = ?
+        )
+    """, (class_id,))
+    
+    # Then delete questions
+    c.execute("DELETE FROM questions WHERE class_id = ?", (class_id,))
+    
+    # Finally delete the class
+    c.execute("DELETE FROM classes WHERE id = ?", (class_id,))
+    
+    conn.commit()
+    conn.close()
+    return redirect(url_for('view_classes'))
 
 if __name__ == '__main__':
     app.run(debug=True, use_reloader=False)
