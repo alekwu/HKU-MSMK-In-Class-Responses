@@ -103,6 +103,36 @@ def student_submission():
     
     return render_template('student.html', class_name=session['class_name'])
 
+# Delete single response
+@app.route('/super-secret-prof-portal-2024/delete/<int:response_id>')
+def delete_response(response_id):
+    conn = sqlite3.connect('classroom.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM responses WHERE id = ?", (response_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('admin'))  # Refresh admin page
+
+# Delete all responses for current class
+@app.route('/super-secret-prof-portal-2024/clear-all')
+def clear_all_responses():
+    if 'class_id' not in session:
+        return "No class selected", 400
+        
+    conn = sqlite3.connect('classroom.db')
+    c = conn.cursor()
+    c.execute("""
+        DELETE FROM responses 
+        WHERE question_id IN (
+            SELECT id FROM questions 
+            WHERE class_id = ?
+        )
+    """, (session['class_id'],))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('admin'))
+
+
 # Admin interface
 @app.route('/HKU_MSMKprof_portal_admin')
 def admin():

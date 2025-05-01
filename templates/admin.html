@@ -33,6 +33,16 @@
         </div>
         
         <h4>Student Responses</h4>
+        
+        <!-- Clear All Button (Top) -->
+        <div class="mb-3">
+            <a href="{{ url_for('clear_all_responses') }}" 
+               class="btn btn-warning btn-sm"
+               onclick="return confirm('Delete ALL responses for all classes? This cannot be undone!')">
+              <i class="bi bi-trash-fill"></i> Clear All Responses
+            </a>
+        </div>
+        
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -42,6 +52,7 @@
                     <th>Name</th>
                     <th>Answer</th>
                     <th>Time</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -53,10 +64,26 @@
                     <td>{{ response[4] }}</td>
                     <td>{{ response[5] }}</td>
                     <td>{{ response[6] }}</td>
+                    <td>
+                        <a href="{{ url_for('delete_response', response_id=response[0]) }}" 
+                           class="btn btn-outline-danger btn-sm"
+                           onclick="return confirm('Delete this response?')">
+                            Delete
+                        </a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        
+        <!-- Clear All Button (Bottom) -->
+        <div class="mt-3">
+            <a href="{{ url_for('clear_all_responses') }}" 
+               class="btn btn-warning"
+               onclick="return confirm('Delete ALL responses for all classes? This cannot be undone!')">
+              <i class="bi bi-trash-fill"></i> Clear All Responses
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}
