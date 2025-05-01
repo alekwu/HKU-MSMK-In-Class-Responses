@@ -158,7 +158,7 @@ def admin():
     return render_template('admin.html', classes=classes, responses=responses)
 
 # Add a new class (admin only)
-@app.route('/admin/add_class', methods=['POST'])
+@app.route('/HKU_MSMKprof_portal_admin/add_class', methods=['POST'])
 def add_class():
     class_name = request.form['class_name']
     access_code = request.form['access_code']
@@ -177,7 +177,7 @@ def add_class():
     return redirect(url_for('admin'))
 
 # View all classes
-@app.route('/super-secret-prof-portal-2024/classes')
+@app.route('/HKU_MSMKprof_portal_admin/classes')
 def view_classes():
     conn = sqlite3.connect('classroom.db')
     c = conn.cursor()
@@ -187,7 +187,7 @@ def view_classes():
     return render_template('classes.html', classes=classes)
 
 # Delete a class
-@app.route('/super-secret-prof-portal-2024/delete-class/<int:class_id>')
+@app.route('/HKU_MSMKprof_portal_admin/delete-class/<int:class_id>')
 def delete_class(class_id):
     conn = sqlite3.connect('classroom.db')
     c = conn.cursor()
