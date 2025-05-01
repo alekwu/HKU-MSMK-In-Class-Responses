@@ -34,11 +34,17 @@ def init_db():
 
 
 from flask import Flask, render_template, request, redirect, url_for, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask import request, abort
 import sqlite3
 from datetime import datetime
 
 app = Flask(__name__)
+
+# Add this at the top (after app creation)
+ADMIN_PASSWORD = "strongpassword"  # Change this to a strong password!
+ADMIN_PASSWORD_HASH = generate_password_hash(ADMIN_PASSWORD)  # Hashed version
+
 app.secret_key = 'your_secret_key_here'  # Change this for production!
 
 # Initialize database
@@ -134,10 +140,35 @@ def clear_all_responses():
     return redirect(url_for('admin'))
 
 
+# New admin login route
+@app.route('/HKU_MSMKprof_portal_admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        password = request.form.get('password')
+        if check_password_hash(ADMIN_PASSWORD_HASH, password):
+            session['admin_authenticated'] = True
+            return redirect(url_for('admin'))
+        else:
+            return render_template('admin_login.html', error="Invalid password")
+    return render_template('admin_login.html')
 
+# Protect all admin routes
+@app.before_request
+def require_admin_auth():
+    if request.path.startswith('/HKU_MSMKprof_portal_admin') and not request.path.endswith('/login'):
+        if not session.get('admin_authenticated'):
+            return redirect(url_for('admin_login'))
+        
+@app.route('/HKU_MSMKprof_portal_admin/logout')
+def admin_logout():
+    session.pop('admin_authenticated', None)
+    return redirect(url_for('home'))
+        
 # Admin interface
 @app.route('/HKU_MSMKprof_portal_admin')
 def admin():
+    if not session.get('admin_authenticated'):
+        return redirect(url_for('admin_login'))
     try:
         focus_class = request.args.get('focus_class')
         
