@@ -3,17 +3,20 @@
 {% block content %}
 <div class="row">
     <div class="col-md-12">
-        <!-- Improved Navigation Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-light rounded">
-            <h2 class="mb-0">Professor Dashboard</h2>
+        <!-- Admin Navigation Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 p-3 admin-header">
+            <div>
+                <h1 class="h3 mb-0">Professor Portal</h1>
+                <p class="mb-0 text-muted">HKU MSMK In-Class Responses System</p>
+            </div>
             <div class="btn-group">
-                <a href="{{ url_for('admin') }}" class="btn btn-secondary">
-                    <i class="bi bi-house"></i> Dashboard
+                <a href="{{ url_for('admin') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-house-door"></i> Dashboard
                 </a>
-                <a href="{{ url_for('view_classes') }}" class="btn btn-info">
+                <a href="{{ url_for('view_classes') }}" class="btn btn-primary">
                     <i class="bi bi-list-ul"></i> Manage Classes
                 </a>
-                <a href="{{ url_for('admin_logout') }}" class="btn btn-danger">
+                <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-danger">
                     <i class="bi bi-box-arrow-right"></i> Logout
                 </a>
             </div>
@@ -22,11 +25,11 @@
         <!-- Add New Class Card -->
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
-                <h4>Add New Class</h4>
+                <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Add New Class</h4>
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('add_class') }}">
-                    <div class="row g-3">
+                    <div class="row g-3 align-items-end">
                         <div class="col-md-5">
                             <label for="class_name" class="form-label">Class Name</label>
                             <input type="text" class="form-control" id="class_name" name="class_name" required>
@@ -35,9 +38,9 @@
                             <label for="access_code" class="form-label">Access Code</label>
                             <input type="text" class="form-control" id="access_code" name="access_code" required>
                         </div>
-                        <div class="col-md-2 d-flex align-items-end">
+                        <div class="col-md-2">
                             <button type="submit" class="btn btn-success w-100">
-                                <i class="bi bi-plus-circle"></i> Add
+                                <i class="bi bi-save"></i> Save
                             </button>
                         </div>
                     </div>
@@ -49,17 +52,61 @@
         <div class="card">
             <div class="card-header bg-primary text-white">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">Student Responses</h4>
-                    <a href="{{ url_for('clear_all_responses') }}" 
-                       class="btn btn-warning btn-sm"
-                       onclick="return confirm('WARNING: Delete ALL responses permanently?')">
-                        <i class="bi bi-trash"></i> Clear All
-                    </a>
+                    <div>
+                        <h4 class="mb-0"><i class="bi bi-collection"></i> Student Responses</h4>
+                        <small class="text-white-50">Showing: 
+                            <strong id="current-class-filter">
+                                {% if focus_class %}
+                                    {% for class in classes %}
+                                        {% if class[0] == focus_class|int %}
+                                            {{ class[1] }}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    All Classes
+                                {% endif %}
+                            </strong>
+                        </small>
+                    </div>
+                    <div class="d-flex">
+                        <div class="dropdown me-2">
+                            <button class="btn btn-light dropdown-toggle" type="button" id="classFilterDropdown" 
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-funnel"></i> Filter
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="classFilterDropdown">
+                                <li><h6 class="dropdown-header">Select Class</h6></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin') }}">
+                                    <i class="bi bi-collection"></i> All Classes
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% for class in classes %}
+                                <li>
+                                    <a class="dropdown-item d-flex justify-content-between align-items-center" 
+                                       href="{{ url_for('admin', focus_class=class[0]) }}">
+                                        <span>{{ class[1] }}</span>
+                                        <span class="badge bg-secondary ms-2">{{ class[2] }}</span>
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <a href="{{ url_for('clear_all_responses') }}" 
+                           class="btn btn-warning"
+                           onclick="return confirm('WARNING: Delete ALL responses for the currently filtered class?')">
+                            <i class="bi bi-trash"></i> Clear
+                        </a>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
+                {% if not responses %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No responses found for the selected filter.
+                </div>
+                {% else %}
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-hover align-middle">
                         <thead class="table-light">
                             <tr>
                                 <th>Class</th>
@@ -76,10 +123,10 @@
                             <tr>
                                 <td>{{ response[1] }}</td>
                                 <td>{{ response[2] }}</td>
-                                <td>{{ response[3] }}</td>
+                                <td><code>{{ response[3] }}</code></td>
                                 <td>{{ response[4] }}</td>
                                 <td class="text-break">{{ response[5] }}</td>
-                                <td>{{ response[6] }}</td>
+                                <td><small>{{ response[6] }}</small></td>
                                 <td>
                                     <a href="{{ url_for('delete_response', response_id=response[0]) }}" 
                                        class="btn btn-outline-danger btn-sm"
@@ -92,8 +139,36 @@
                         </tbody>
                     </table>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Highlight the current filter in dropdown
+    const urlParams = new URLSearchParams(window.location.search);
+    const focusClass = urlParams.get('focus_class');
+    
+    if (focusClass) {
+        const dropdownItems = document.querySelectorAll('.dropdown-item');
+        dropdownItems.forEach(item => {
+            if (item.getAttribute('href').includes('focus_class=' + focusClass)) {
+                item.classList.add('active');
+                item.innerHTML = '<i class="bi bi-check-circle"></i> ' + item.innerHTML;
+            }
+        });
+    } else {
+        // Highlight "All Classes" if no filter
+        const allClassesItem = document.querySelector('.dropdown-item[href*="admin"]');
+        if (allClassesItem) {
+            allClassesItem.classList.add('active');
+            allClassesItem.innerHTML = '<i class="bi bi-check-circle"></i> ' + allClassesItem.innerHTML;
+        }
+    }
+});
+</script>
 {% endblock %}
