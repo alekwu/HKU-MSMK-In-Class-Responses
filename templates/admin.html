@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Professor Dashboard</h2>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Add New Class</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_class') }}">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <div class="mb-3">
+                                <label for="class_name" class="form-label">Class Name</label>
+                                <input type="text" class="form-control" id="class_name" name="class_name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="mb-3">
+                                <label for="access_code" class="form-label">Access Code</label>
+                                <input type="text" class="form-control" id="access_code" name="access_code" required>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary mt-4">Add Class</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <h4>Student Responses</h4>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Class</th>
+                    <th>Question</th>
+                    <th>UID</th>
+                    <th>Name</th>
+                    <th>Answer</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for response in responses %}
+                <tr>
+                    <td>{{ response[1] }}</td>
+                    <td>{{ response[2] }}</td>
+                    <td>{{ response[3] }}</td>
+                    <td>{{ response[4] }}</td>
+                    <td>{{ response[5] }}</td>
+                    <td>{{ response[6] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

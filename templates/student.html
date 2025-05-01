@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>{{ class_name }} - Student Response</h4>
+            </div>
+            <div class="card-body">
+                {% if submitted %}
+                <div class="alert alert-success">
+                    Your response has been submitted! You can submit another answer below.
+                </div>
+                {% endif %}
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="uid" class="form-label">University ID</label>
+                        <input type="text" class="form-control" id="uid" name="uid" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="student_name" class="form-label">Your Name</label>
+                        <input type="text" class="form-control" id="student_name" name="student_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="answer" class="form-label">Your Answer</label>
+                        <textarea class="form-control" id="answer" name="answer" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
