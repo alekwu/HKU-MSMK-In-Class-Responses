@@ -6,12 +6,6 @@ def init_db():
     c = conn.cursor()
     
     # Create tables
-    c.execute('''CREATE TABLE IF NOT EXISTS professors
-             (id INTEGER PRIMARY KEY AUTOINCREMENT,
-              email TEXT UNIQUE NOT NULL,
-              password TEXT NOT NULL,
-              name TEXT NOT NULL)''')
-    
     c.execute('''CREATE TABLE IF NOT EXISTS classes
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   name TEXT NOT NULL,
@@ -43,84 +37,12 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from flask import request, abort
 import sqlite3
 from datetime import datetime
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
-from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Change this for production!
 
-# Flask-Login setup
-login_manager = LoginManager(app)
-login_manager.login_view = 'prof_login'
-
-class Professor(UserMixin):
-    pass
-
-@login_manager.user_loader
-def load_user(prof_id):
-    conn = sqlite3.connect('classroom.db')
-    c = conn.cursor()
-    c.execute("SELECT id FROM professors WHERE id = ?", (prof_id,))
-    prof = c.fetchone()
-    conn.close()
-    if not prof:
-        return None
-    user = Professor()
-    user.id = prof[0]
-    return user
-
-# Professor Signup
-@app.route('/prof/signup', methods=['GET', 'POST'])
-def prof_signup():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = generate_password_hash(request.form['password'])
-        name = request.form['name']
-        
-        try:
-            conn = sqlite3.connect('classroom.db')
-            c = conn.cursor()
-            c.execute("INSERT INTO professors (email, password, name) VALUES (?, ?, ?)",
-                     (email, password, name))
-            conn.commit()
-            return redirect(url_for('prof_login'))
-        except sqlite3.IntegrityError:
-            return "Email already exists", 400
-    
-    return render_template('prof_signup.html')
-
-# Professor Login
-@app.route('/prof/login', methods=['GET', 'POST'])
-def prof_login():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        
-        conn = sqlite3.connect('classroom.db')
-        c = conn.cursor()
-        c.execute("SELECT id, password FROM professors WHERE email = ?", (email,))
-        prof = c.fetchone()
-        conn.close()
-        
-        if prof and check_password_hash(prof[1], password):
-            user = Professor()
-            user.id = prof[0]
-            login_user(user)
-            return redirect(url_for('admin'))
-        
-        return "Invalid credentials", 401
-    
-    return render_template('prof_login.html')
-
-
-# Flask-Login setup
-login_manager = LoginManager(app)
-login_manager.login_view = 'prof_login'
-
 # Initialize database
 init_db()
-
-
 
 @app.route('/')
 def home():
@@ -182,8 +104,7 @@ def student_submission():
     return render_template('student.html', class_name=session['class_name'])
 
 # Admin interface
-@app.route('/admin')
-@login_required  # ← This ensures only logged-in profs can access
+@app.route('/HKU_MSMKprof_portal_admin')
 def admin():
     conn = sqlite3.connect('classroom.db')
     c = conn.cursor()
