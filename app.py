@@ -38,6 +38,16 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask import request, abort
 import sqlite3
 from datetime import datetime
+from flask import flash 
+from flask import (
+    Flask, 
+    render_template, 
+    request, 
+    redirect, 
+    url_for, 
+    session,
+    flash  # <-- THIS IS CRUCIAL
+)
 
 app = Flask(__name__)
 
@@ -121,24 +131,39 @@ def delete_response(response_id):
     return redirect(url_for('admin'))  # Refresh admin page
 
 # Delete all responses for current class
-@app.route('/sHKU_MSMKprof_portal_admin/clear-all')
-def clear_all_responses():
-    if 'class_id' not in session:
-        return "No class selected", 400
+@app.route('/HKU_MSMKprof_portal_admin/clear-all/<int:class_id>')
+def clear_all_responses(class_id):
+    if not session.get('admin_authenticated'):
+        abort(403)
         
-    conn = sqlite3.connect('classroom.db')
-    c = conn.cursor()
-    c.execute("""
-        DELETE FROM responses 
-        WHERE question_id IN (
-            SELECT id FROM questions 
-            WHERE class_id = ?
-        )
-    """, (session['class_id'],))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('admin'))
-
+    try:
+        conn = sqlite3.connect('classroom.db')
+        c = conn.cursor()
+        
+        # Get class name for the message
+        c.execute("SELECT name FROM classes WHERE id = ?", (class_id,))
+        class_name = c.fetchone()[0]
+        
+        # Delete responses
+        c.execute("""
+            DELETE FROM responses 
+            WHERE question_id IN (
+                SELECT id FROM questions WHERE class_id = ?
+            )
+        """, (class_id,))
+        
+        # Delete questions
+        c.execute("DELETE FROM questions WHERE class_id = ?", (class_id,))
+        
+        conn.commit()
+        flash(f'Successfully cleared all responses for "{class_name}"', 'success')
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error clearing responses: {str(e)}', 'danger')
+    finally:
+        conn.close()
+    
+    return redirect(url_for('admin', focus_class=class_id))
 
 # New admin login route
 @app.route('/HKU_MSMKprof_portal_admin/login', methods=['GET', 'POST'])
