@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timezone
 import pytz
-from flask_wtf.csrf import CSRFProtect
+
 
 app = Flask(__name__)
 
@@ -14,7 +14,6 @@ app = Flask(__name__)
 ADMIN_PASSWORD = "strongpassword"  # Change this to a strong password!
 ADMIN_PASSWORD_HASH = generate_password_hash(ADMIN_PASSWORD)
 app.secret_key = 'your_secret_key_here'  # Change this for production!
-csrf = CSRFProtect(app)  # CSRF Protection
 
 # Database connection
 def get_db_connection():
@@ -63,14 +62,14 @@ def init_db():
 # Initialize the database
 init_db()
 
-# Timezone conversion filter
+# add timezone conversion
 @app.template_filter('convert_timezone')
 def convert_timezone_filter(dt):
+    # Convert UTC to Beijing time
     utc_time = dt.replace(tzinfo=timezone.utc)
     beijing_time = utc_time.astimezone(pytz.timezone('Asia/Shanghai'))
     return beijing_time.strftime('%Y-%m-%d %H:%M')
 
-# Routes
 @app.route('/')
 def home():
     return redirect(url_for('code_entry'))
@@ -109,12 +108,14 @@ def student_submission():
         conn = get_db_connection()
         c = conn.cursor()
         
+        # Use the student-provided question text instead of auto-generated
         c.execute(
             "INSERT INTO questions (class_id, text) VALUES (%s, %s) RETURNING id",
-            (session['class_id'], question_text)
+            (session['class_id'], question_text)  # Changed from time-based to student input
         )
         question_id = c.fetchone()[0]
         
+        # Save response (no changes needed here)
         c.execute(
             "INSERT INTO responses (question_id, uid, student_name, answer) VALUES (%s, %s, %s, %s)",
             (question_id, uid, student_name, answer)
@@ -151,9 +152,11 @@ def clear_all_responses(class_id):
         conn = get_db_connection()
         c = conn.cursor()
         
+        # Get class name for the message
         c.execute("SELECT name FROM classes WHERE id = %s", (class_id,))
         class_name = c.fetchone()[0]
         
+        # Delete responses
         c.execute("""
             DELETE FROM responses 
             WHERE question_id IN (
@@ -161,6 +164,7 @@ def clear_all_responses(class_id):
             )
         """, (class_id,))
         
+        # Delete questions
         c.execute("DELETE FROM questions WHERE class_id = %s", (class_id,))
         
         conn.commit()
@@ -206,9 +210,11 @@ def admin():
         conn = get_db_connection()
         c = conn.cursor()
         
+        # Get all classes
         c.execute("SELECT id, name, access_code FROM classes")
         classes = c.fetchall()
         
+        # Build response query
         query = '''
             SELECT r.id, c.name, q.text, r.uid, r.student_name, r.answer, r.timestamp
             FROM responses r
@@ -265,37 +271,22 @@ def update_access_code(class_id):
     if not session.get('admin_authenticated'):
         abort(403)
         
-    new_code = request.form.get('new_access_code')
-    if not new_code:
-        flash('Access code cannot be empty', 'danger')
-        return redirect(url_for('view_classes'))
+    new_code = request.form['new_access_code']
     
-    conn = None
+    conn = get_db_connection()
+    c = conn.cursor()
+    
     try:
-        conn = get_db_connection()
-        c = conn.cursor()
-        
-        # Check if new code already exists
-        c.execute("SELECT id FROM classes WHERE access_code = %s AND id != %s", (new_code, class_id))
-        if c.fetchone():
-            flash('Access code must be unique!', 'danger')
-            return redirect(url_for('view_classes'))
-        
-        # Update the code
         c.execute(
             "UPDATE classes SET access_code = %s WHERE id = %s",
             (new_code, class_id)
         )
         conn.commit()
         flash('Access code updated successfully!', 'success')
-    except Exception as e:
-        print(f"Error updating access code: {str(e)}")
-        flash(f'Error updating access code: {str(e)}', 'danger')
-        if conn:
-            conn.rollback()
+    except psycopg2.IntegrityError:
+        flash('Access code must be unique!', 'danger')
     finally:
-        if conn:
-            conn.close()
+        conn.close()
     
     return redirect(url_for('view_classes'))
 
@@ -309,8 +300,8 @@ def view_classes():
     c.execute("SELECT id, name, access_code FROM classes")
     classes = c.fetchall()
     conn.close()
-    return render_template('view_classes.html', classes=classes)
-    
+    return render_template('classes.html', classes=classes)
+
 @app.route('/HKU_MSMKprof_portal_admin/delete-class/<int:class_id>')
 def delete_class(class_id):
     if not session.get('admin_authenticated'):
@@ -320,6 +311,7 @@ def delete_class(class_id):
     c = conn.cursor()
     
     try:
+        # Delete responses
         c.execute("""
             DELETE FROM responses 
             WHERE question_id IN (
@@ -327,8 +319,10 @@ def delete_class(class_id):
             )
         """, (class_id,))
         
+        # Delete questions
         c.execute("DELETE FROM questions WHERE class_id = %s", (class_id,))
         
+        # Delete class
         c.execute("DELETE FROM classes WHERE id = %s", (class_id,))
         
         conn.commit()
