@@ -278,6 +278,30 @@ def view_classes():
     conn.close()
     return render_template('classes.html', classes=classes)
 
+@app.route('/HKU_MSMKprof_portal_admin/update-access-code/<int:class_id>', methods=['POST'])
+def update_access_code(class_id):
+    if not session.get('admin_authenticated'):
+        abort(403)
+        
+    new_code = request.form['new_access_code']
+    
+    conn = get_db_connection()
+    c = conn.cursor()
+    
+    try:
+        c.execute(
+            "UPDATE classes SET access_code = %s WHERE id = %s",
+            (new_code, class_id)
+        )
+        conn.commit()
+        flash('Access code updated successfully!', 'success')
+    except psycopg2.IntegrityError:
+        flash('Access code must be unique!', 'danger')
+    finally:
+        conn.close()
+    
+    return redirect(url_for('view_classes'))
+
 @app.route('/HKU_MSMKprof_portal_admin/delete-class/<int:class_id>')
 def delete_class(class_id):
     if not session.get('admin_authenticated'):
