@@ -115,7 +115,7 @@
                                 <th>UID</th>
                                 <th>Name</th>
                                 <th>Answer</th>
-                                <th>Time</th>
+                                <th>Time (Beijing)</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -127,7 +127,7 @@
                                 <td><code>{{ response[3] }}</code></td>
                                 <td>{{ response[4] }}</td>
                                 <td class="text-break">{{ response[5] }}</td>
-                                <td><small>{{ response[6] }}</small></td>
+                                <td><small>{{ response[6]|convert_timezone }}</small></td>
                                 <td>
                                     <a href="{{ url_for('delete_response', response_id=response[0]) }}" 
                                        class="btn btn-outline-danger btn-sm"
