@@ -272,6 +272,7 @@ def update_access_code(class_id):
         abort(403)
         
     new_code = request.form['new_access_code']
+    referrer = request.referrer  # Get the previous URL
     
     conn = get_db_connection()
     c = conn.cursor()
@@ -288,8 +289,11 @@ def update_access_code(class_id):
     finally:
         conn.close()
     
-    return redirect(url_for('view_classes'))
-
+    # Redirect back to where the request came from
+    if referrer and '/HKU_MSMKprof_portal_admin/classes' in referrer:
+        return redirect(url_for('view_classes'))
+    else:
+        return redirect(url_for('admin', focus_class=class_id))
 @app.route('/HKU_MSMKprof_portal_admin/classes')
 def view_classes():
     if not session.get('admin_authenticated'):
