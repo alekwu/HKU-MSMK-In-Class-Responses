@@ -4,7 +4,9 @@ from psycopg2 import sql
 from urllib.parse import urlparse
 from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timezone
+import pytz
+
 
 app = Flask(__name__)
 
@@ -60,6 +62,14 @@ def init_db():
 # Initialize the database
 init_db()
 
+# add timezone conversion
+@app.template_filter('convert_timezone')
+def convert_timezone_filter(dt):
+    # Convert UTC to Beijing time
+    utc_time = dt.replace(tzinfo=timezone.utc)
+    beijing_time = utc_time.astimezone(pytz.timezone('Asia/Shanghai'))
+    return beijing_time.strftime('%Y-%m-%d %H:%M')
+
 @app.route('/')
 def home():
     return redirect(url_for('code_entry'))
@@ -90,6 +100,7 @@ def student_submission():
         return redirect(url_for('code_entry'))
     
     if request.method == 'POST':
+        question_text = request.form['question_text']
         uid = request.form['uid']
         student_name = request.form['student_name']
         answer = request.form['answer']
@@ -97,14 +108,14 @@ def student_submission():
         conn = get_db_connection()
         c = conn.cursor()
         
-        # Create a new question
+        # Use the student-provided question text instead of auto-generated
         c.execute(
             "INSERT INTO questions (class_id, text) VALUES (%s, %s) RETURNING id",
-            (session['class_id'], f"Question at {datetime.now().strftime('%H:%M')}")
+            (session['class_id'], question_text)  # Changed from time-based to student input
         )
         question_id = c.fetchone()[0]
         
-        # Save the response
+        # Save response (no changes needed here)
         c.execute(
             "INSERT INTO responses (question_id, uid, student_name, answer) VALUES (%s, %s, %s, %s)",
             (question_id, uid, student_name, answer)
