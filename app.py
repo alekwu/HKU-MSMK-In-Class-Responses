@@ -266,18 +266,6 @@ def add_class():
     
     return redirect(url_for('admin'))
 
-@app.route('/HKU_MSMKprof_portal_admin/classes')
-def view_classes():
-    if not session.get('admin_authenticated'):
-        abort(403)
-        
-    conn = get_db_connection()
-    c = conn.cursor()
-    c.execute("SELECT id, name, access_code FROM classes")
-    classes = c.fetchall()
-    conn.close()
-    return render_template('classes.html', classes=classes)
-
 @app.route('/HKU_MSMKprof_portal_admin/update-access-code/<int:class_id>', methods=['POST'])
 def update_access_code(class_id):
     if not session.get('admin_authenticated'):
@@ -302,6 +290,18 @@ def update_access_code(class_id):
     
     return redirect(url_for('view_classes'))
 
+@app.route('/HKU_MSMKprof_portal_admin/classes')
+def view_classes():
+    if not session.get('admin_authenticated'):
+        abort(403)
+        
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("SELECT id, name, access_code FROM classes")
+    classes = c.fetchall()
+    conn.close()
+    return render_template('classes.html', classes=classes)
+    
 @app.route('/HKU_MSMKprof_portal_admin/delete-class/<int:class_id>')
 def delete_class(class_id):
     if not session.get('admin_authenticated'):
