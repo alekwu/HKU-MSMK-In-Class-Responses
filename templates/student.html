@@ -10,15 +10,11 @@
             <div class="card-body">
                 {% if submitted %}
                 <div class="alert alert-success">
-                    Your response has been submitted! You can submit another answer below.
+                    Your response has been submitted successfully!
                 </div>
                 {% endif %}
                 
                 <form method="POST">
-                    <div class="mb-3">
-                        <label for="question_text" class="form-label">Question (from professor)</label>
-                        <input type="text" class="form-control" id="question_text" name="question_text" required>
-                    </div>
                     <div class="mb-3">
                         <label for="uid" class="form-label">University ID</label>
                         <input type="text" class="form-control" id="uid" name="uid" required>
