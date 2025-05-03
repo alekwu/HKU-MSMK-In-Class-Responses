@@ -271,22 +271,37 @@ def update_access_code(class_id):
     if not session.get('admin_authenticated'):
         abort(403)
         
-    new_code = request.form['new_access_code']
+    new_code = request.form.get('new_access_code')
+    if not new_code:
+        flash('Access code cannot be empty', 'danger')
+        return redirect(url_for('view_classes'))
     
-    conn = get_db_connection()
-    c = conn.cursor()
-    
+    conn = None
     try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        # Check if new code already exists
+        c.execute("SELECT id FROM classes WHERE access_code = %s AND id != %s", (new_code, class_id))
+        if c.fetchone():
+            flash('Access code must be unique!', 'danger')
+            return redirect(url_for('view_classes'))
+        
+        # Update the code
         c.execute(
             "UPDATE classes SET access_code = %s WHERE id = %s",
             (new_code, class_id)
         )
         conn.commit()
         flash('Access code updated successfully!', 'success')
-    except psycopg2.IntegrityError:
-        flash('Access code must be unique!', 'danger')
+    except Exception as e:
+        print(f"Error updating access code: {str(e)}")
+        flash(f'Error updating access code: {str(e)}', 'danger')
+        if conn:
+            conn.rollback()
     finally:
-        conn.close()
+        if conn:
+            conn.close()
     
     return redirect(url_for('view_classes'))
 
