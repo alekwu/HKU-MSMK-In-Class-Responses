@@ -100,7 +100,7 @@ def student_submission():
         return redirect(url_for('code_entry'))
     
     if request.method == 'POST':
-        question_text = request.form['question_text']
+        # Remove question_text from form data
         uid = request.form['uid']
         student_name = request.form['student_name']
         answer = request.form['answer']
@@ -108,14 +108,14 @@ def student_submission():
         conn = get_db_connection()
         c = conn.cursor()
         
-        # Use the student-provided question text instead of auto-generated
+        # Insert a generic question since students won't provide it
         c.execute(
             "INSERT INTO questions (class_id, text) VALUES (%s, %s) RETURNING id",
-            (session['class_id'], question_text)  # Changed from time-based to student input
+            (session['class_id'], "Student Response")  # Changed to fixed text
         )
         question_id = c.fetchone()[0]
         
-        # Save response (no changes needed here)
+        # Save response
         c.execute(
             "INSERT INTO responses (question_id, uid, student_name, answer) VALUES (%s, %s, %s, %s)",
             (question_id, uid, student_name, answer)
