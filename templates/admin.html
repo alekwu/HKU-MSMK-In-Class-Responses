@@ -3,7 +3,6 @@
 {% block content %}
 <div class="row">
     <div class="col-md-12">
-        <!-- Admin Navigation Header -->
         <div class="d-flex justify-content-between align-items-center mb-4 p-3 admin-header">
             <div>
                 <h1 class="h3 mb-0">Professor Portal</h1>
@@ -21,8 +20,7 @@
                 </a>
             </div>
         </div>
-        
-        <!-- Add New Class Card -->
+
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
                 <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Add New Class</h4>
@@ -48,19 +46,18 @@
             </div>
         </div>
 
-        <!-- Responses Section -->
         <div class="card">
             <div class="card-header bg-primary text-white">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h4 class="mb-0"><i class="bi bi-collection"></i> Student Responses</h4>
                         <small class="text-white-50">Showing: 
-                            <strong id="current-class-filter">
-                                {% if focus_class %}
+                            <strong>
+                                {% if request.args.get('filter') == 'starred' %}
+                                    Starred Responses
+                                {% elif focus_class %}
                                     {% for class in classes %}
-                                        {% if class[0] == focus_class|int %}
-                                            {{ class[1] }}
-                                        {% endif %}
+                                        {% if class[0] == focus_class|int %}{{ class[1] }}{% endif %}
                                     {% endfor %}
                                 {% else %}
                                     All Classes
@@ -70,14 +67,16 @@
                     </div>
                     <div class="d-flex">
                         <div class="dropdown me-2">
-                            <button class="btn btn-light dropdown-toggle" type="button" id="classFilterDropdown" 
-                                    data-bs-toggle="dropdown" aria-expanded="false">
+                            <button class="btn btn-light dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown">
                                 <i class="bi bi-funnel"></i> Filter
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="classFilterDropdown">
-                                <li><h6 class="dropdown-header">Select Class</h6></li>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><h6 class="dropdown-header">View Options</h6></li>
                                 <li><a class="dropdown-item" href="{{ url_for('admin') }}">
-                                    <i class="bi bi-collection"></i> All Classes
+                                    <i class="bi bi-collection"></i> All Responses
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin', filter='starred') }}">
+                                    <i class="bi bi-star-fill"></i> Starred Only
                                 </a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 {% for class in classes %}
@@ -93,7 +92,7 @@
                         {% if focus_class %}
                         <a href="{{ url_for('clear_all_responses', class_id=focus_class) }}" 
                            class="btn btn-warning"
-                           onclick="return confirm('WARNING: This will permanently delete ALL responses for this class. Continue?')">
+                           onclick="return confirm('Delete ALL responses for this class?')">
                             <i class="bi bi-trash"></i> Clear
                         </a>
                         {% endif %}
@@ -103,7 +102,7 @@
             <div class="card-body">
                 {% if not responses %}
                 <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> No responses found for the selected filter.
+                    <i class="bi bi-info-circle"></i> No responses found
                 </div>
                 {% else %}
                 <div class="table-responsive">
@@ -114,21 +113,29 @@
                                 <th>UID</th>
                                 <th>Name</th>
                                 <th>Answer</th>
-                                <th>Time (Beijing)</th>
+                                <th>Time</th>
+                                <th>Star</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for response in responses %}
-                            <tr>
+                            <tr class="{% if response[7] %}table-warning{% endif %}">
                                 <td>{{ response[1] }}</td>
                                 <td><code>{{ response[3] }}</code></td>
                                 <td>{{ response[4] }}</td>
                                 <td class="text-break">{{ response[5] }}</td>
                                 <td><small>{{ response[6]|convert_timezone }}</small></td>
                                 <td>
+                                    <a href="{{ url_for('star_response', response_id=response[0]) }}" 
+                                       class="btn btn-sm star-btn {% if response[7] %}btn-warning{% else %}btn-outline-warning{% endif %}"
+                                       title="{% if response[7] %}Unstar{% else %}Star{% endif %} this response">
+                                        <i class="bi bi-star{% if response[7] %}-fill{% endif %}"></i>
+                                    </a>
+                                </td>
+                                <td>
                                     <a href="{{ url_for('delete_response', response_id=response[0]) }}" 
-                                       class="btn btn-outline-danger btn-sm"
+                                       class="btn btn-sm btn-outline-danger"
                                        onclick="return confirm('Delete this response?')">
                                         <i class="bi bi-trash"></i>
                                     </a>
@@ -148,12 +155,15 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Highlight current filter in dropdown
-    const dropdownItems = document.querySelectorAll('.dropdown-item');
-    dropdownItems.forEach(item => {
-        if (item.classList.contains('active')) {
-            item.innerHTML = '<i class="bi bi-check-circle"></i> ' + item.innerHTML;
-        }
+    // Highlight active filter
+    const activeFilter = window.location.search.includes('filter=starred') ? 
+        '[href*="filter=starred"]' : 
+        window.location.search.includes('focus_class') ? 
+        '[href*="focus_class"]' : 
+        '[href="' + window.location.pathname + '"]';
+    
+    document.querySelectorAll(activeFilter).forEach(el => {
+        el.innerHTML = '<i class="bi bi-check-circle"></i> ' + el.innerHTML;
     });
 });
 </script>
