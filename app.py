@@ -315,7 +315,8 @@ def view_classes():
     c.execute("SELECT id, name, access_code FROM classes")
     classes = c.fetchall()
     conn.close()
-    return render_template('classes.html', classes=classes)
+    
+    return render_template('view_classes.html', classes=classes)
 
 @app.route('/HKU_MSMKprof_portal_admin/delete-class/<int:class_id>')
 def delete_class(class_id):
